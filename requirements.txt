@@ -1,0 +1,21 @@
+# Django
+Django>=4.2,<5.0
+djangorestframework>=3.14,<4.0
+
+# Database (SQLite viene incluido con Python)
+# psycopg2-binary>=2.9,<3.0  # Solo si usas PostgreSQL
+
+# Environment variables
+python-decouple>=3.8,<4.0
+
+# CORS
+django-cors-headers>=4.3,<5.0
+
+# Filtering
+django-filter>=23.5,<24.0
+
+# Authentication
+djangorestframework-simplejwt>=5.3,<6.0
+
+# Development
+ipython>=8.0,<9.0
