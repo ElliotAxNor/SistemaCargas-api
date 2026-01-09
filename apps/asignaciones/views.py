@@ -14,6 +14,7 @@ from .serializers import (
     PeriodoSerializer,
     PeriodoListSerializer,
     CargaSerializer,
+    CargaDetailSerializer,
     CargaListSerializer,
     CargaCreateUpdateSerializer,
     BloqueHorarioSerializer
@@ -89,7 +90,6 @@ class PeriodoViewSet(viewsets.ModelViewSet):
             if 'cargas_problematicas' in resultado:
                 cargas_prob = resultado['cargas_problematicas']
                 response_data['cargas_problematicas'] = {
-                    'erroneas': CargaListSerializer(cargas_prob['erroneas'], many=True).data,
                     'pendientes': CargaListSerializer(cargas_prob['pendientes'], many=True).data
                 }
 
@@ -111,16 +111,14 @@ class PeriodoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def cargas_problematicas(self, request, pk=None):
         """
-        Obtiene las cargas erróneas y pendientes del periodo.
+        Obtiene las cargas pendientes (incompletas) del periodo.
         GET /api/asignaciones/periodos/{id}/cargas_problematicas/
         """
         periodo = self.get_object()
         cargas_problematicas = PeriodoService.obtener_cargas_problematicas(periodo)
 
         return Response({
-            'total_erroneas': len(cargas_problematicas['erroneas']),
             'total_pendientes': len(cargas_problematicas['pendientes']),
-            'erroneas': CargaListSerializer(cargas_problematicas['erroneas'], many=True).data,
             'pendientes': CargaListSerializer(cargas_problematicas['pendientes'], many=True).data
         })
 
@@ -150,11 +148,12 @@ class CargaViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return CargaListSerializer
+        if self.action in ['list', 'retrieve']:
+            # Usar serializer con objetos completos anidados para lectura
+            return CargaDetailSerializer
         elif self.action in ['create', 'update', 'partial_update']:
             return CargaCreateUpdateSerializer
-        return CargaSerializer
+        return CargaDetailSerializer
 
     def get_queryset(self):
         """
@@ -308,13 +307,11 @@ class CargaViewSet(viewsets.ModelViewSet):
 
         # Agrupar por estado
         correctas = queryset.filter(estado=Carga.Estado.CORRECTA).count()
-        erroneas = queryset.filter(estado=Carga.Estado.ERRONEA).count()
         pendientes = queryset.filter(estado=Carga.Estado.PENDIENTE).count()
 
         return Response({
             'total': queryset.count(),
             'correctas': correctas,
-            'erroneas': erroneas,
             'pendientes': pendientes
         })
 

@@ -82,6 +82,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
         source='get_rol_display',
         read_only=True
     )
+    # Campo calculado: unidad académica efectiva (directa o a través del programa)
+    unidad_academica_efectiva = serializers.SerializerMethodField()
 
     class Meta:
         model = Usuario
@@ -95,12 +97,25 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'rol_display',
             'unidad_academica',
             'unidad_academica_nombre',
+            'unidad_academica_efectiva',
             'programa_academico',
             'programa_academico_nombre',
             'is_active',
             'date_joined'
         ]
         read_only_fields = ['date_joined']
+
+    def get_unidad_academica_efectiva(self, obj):
+        """
+        Retorna el ID de la unidad académica del usuario.
+        - Si es RESP_UNIDAD: retorna su unidad_academica directa
+        - Si es RESP_PROGRAMA: retorna la unidad_academica de su programa
+        """
+        if obj.unidad_academica_id:
+            return obj.unidad_academica_id
+        elif obj.programa_academico_id and obj.programa_academico:
+            return obj.programa_academico.unidad_academica_id
+        return None
 
 
 class UsuarioCreateUpdateSerializer(serializers.ModelSerializer):

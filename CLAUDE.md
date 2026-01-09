@@ -105,9 +105,8 @@ curl http://127.0.0.1:8000/api/asignaciones/cargas/ \
 
 ### 1. Automatic Carga State Calculation
 When creating/updating a Carga, the state is AUTOMATICALLY calculated:
-- **CORRECTA**: Hours match AND no conflicts
-- **ERRONEA**: Hours don't match OR has conflicts
-- **PENDIENTE**: No bloques assigned yet
+- **CORRECTA**: Has profesor AND bloques assigned
+- **PENDIENTE**: Missing profesor OR bloques (incomplete)
 
 This happens in `CargaCreateUpdateSerializer._actualizar_estado()` method.
 
@@ -148,11 +147,11 @@ if isinstance(hora_inicio, str):
 Services may return Django model instances. When returning from views, serialize them:
 ```python
 # BAD - will cause JSON serialization error
-return Response({'cargas': cargas_problematicas['erroneas']})
+return Response({'cargas': cargas_problematicas['pendientes']})
 
 # GOOD - serialize model instances
 return Response({
-    'cargas': CargaListSerializer(cargas_problematicas['erroneas'], many=True).data
+    'cargas': CargaListSerializer(cargas_problematicas['pendientes'], many=True).data
 })
 ```
 

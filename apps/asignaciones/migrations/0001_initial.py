@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             name='Carga',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('estado', models.CharField(choices=[('ERRONEA', 'Errónea'), ('PENDIENTE', 'Pendiente'), ('CORRECTA', 'Correcta')], default='PENDIENTE', max_length=10)),
+                ('estado', models.CharField(choices=[('PENDIENTE', 'Pendiente'), ('CORRECTA', 'Correcta')], default='PENDIENTE', max_length=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],

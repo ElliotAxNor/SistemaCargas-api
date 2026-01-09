@@ -201,7 +201,6 @@ Esta documentación describe todos los serializers implementados en el Sistema d
     "cargas_por_estado": {
       "correctas": 120,
       "pendientes": 20,
-      "erroneas": 10
     },
     "porcentaje_completado": 80.0
   }
@@ -309,7 +308,7 @@ Esta documentación describe todos los serializers implementados en el Sistema d
 3. Validar conflictos con ValidadorConflictos
 4. Crear/Actualizar carga
 5. Crear bloques horarios
-6. Calcular y asignar estado (ERRONEA, PENDIENTE, CORRECTA)
+6. Calcular y asignar estado (PENDIENTE, CORRECTA)
 ```
 
 **Ejemplo de creación:**

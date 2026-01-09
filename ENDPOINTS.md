@@ -297,7 +297,6 @@ Response (error):
   "success": false,
   "mensaje": "No se puede finalizar el periodo. Hay 30 carga(s) con problemas.",
   "cargas_problematicas": {
-    "erroneas": [...],
     "pendientes": [...]
   }
 }
@@ -313,7 +312,6 @@ Response:
   "cargas_por_estado": {
     "correctas": 120,
     "pendientes": 20,
-    "erroneas": 10
   },
   "porcentaje_completado": 80.0,
   "puede_finalizar": false,
@@ -327,9 +325,7 @@ GET /api/asignaciones/periodos/{id}/cargas_problematicas/
 
 Response:
 {
-  "total_erroneas": 10,
   "total_pendientes": 20,
-  "erroneas": [...],
   "pendientes": [...]
 }
 ```
@@ -470,7 +466,6 @@ Response:
 {
   "total": 150,
   "correctas": 120,
-  "erroneas": 10,
   "pendientes": 20
 }
 ```

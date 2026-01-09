@@ -407,14 +407,14 @@ class PeriodoServiceTestCase(TestCase):
         puede = PeriodoService.puede_finalizar(self.periodo)
         self.assertFalse(puede)
 
-    def test_no_puede_finalizar_con_cargas_erroneas(self):
-        """Test: Periodo con cargas erróneas no puede finalizar."""
+    def test_no_puede_finalizar_con_cargas_pendientes_por_falta_de_profesor(self):
+        """Test: Periodo con cargas pendientes (sin profesor) no puede finalizar."""
         Carga.objects.create(
             programa_academico=self.programa,
             materia=self.materia,
-            profesor=self.profesor,
+            profesor=None,
             periodo=self.periodo,
-            estado=Carga.Estado.ERRONEA
+            estado=Carga.Estado.PENDIENTE
         )
 
         puede = PeriodoService.puede_finalizar(self.periodo)
@@ -485,6 +485,5 @@ class PeriodoServiceTestCase(TestCase):
         self.assertEqual(stats['total_cargas'], 3)
         self.assertEqual(stats['cargas_por_estado']['correctas'], 2)
         self.assertEqual(stats['cargas_por_estado']['pendientes'], 1)
-        self.assertEqual(stats['cargas_por_estado']['erroneas'], 0)
         self.assertAlmostEqual(stats['porcentaje_completado'], 66.67, places=1)
         self.assertFalse(stats['puede_finalizar'])

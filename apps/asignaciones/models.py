@@ -42,13 +42,11 @@ class Carga(models.Model):
     Pertenece a un programa académico y un periodo.
 
     Estados:
-    - PENDIENTE: Sin validar
-    - ERRONEA: Conflicto de horario u horas incorrectas
-    - CORRECTA: Validada sin conflictos
+    - PENDIENTE: Carga incompleta (falta profesor o bloques horarios)
+    - CORRECTA: Carga completa y lista
     """
 
     class Estado(models.TextChoices):
-        ERRONEA = 'ERRONEA', 'Errónea'
         PENDIENTE = 'PENDIENTE', 'Pendiente'
         CORRECTA = 'CORRECTA', 'Correcta'
 
@@ -65,7 +63,10 @@ class Carga(models.Model):
     profesor = models.ForeignKey(
         Profesor,
         on_delete=models.CASCADE,
-        related_name='cargas'
+        related_name='cargas',
+        null=True,
+        blank=True,
+        help_text='Opcional para permitir guardado parcial (borrador)'
     )
     periodo = models.ForeignKey(
         Periodo,

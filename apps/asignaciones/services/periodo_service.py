@@ -15,7 +15,7 @@ class PeriodoService:
     def puede_finalizar(periodo: Periodo) -> bool:
         """
         Verifica si un periodo puede ser finalizado.
-        Solo puede finalizar si no hay cargas erróneas o pendientes.
+        Solo puede finalizar si no hay cargas pendientes (incompletas).
 
         Args:
             periodo: Instancia de Periodo
@@ -23,25 +23,23 @@ class PeriodoService:
         Returns:
             bool: True si puede finalizar, False en caso contrario
         """
-        cargas_problematicas = periodo.cargas.exclude(
-            estado=Carga.Estado.CORRECTA
+        cargas_pendientes = periodo.cargas.filter(
+            estado=Carga.Estado.PENDIENTE
         )
-        return not cargas_problematicas.exists()
+        return not cargas_pendientes.exists()
 
     @staticmethod
     def obtener_cargas_problematicas(periodo: Periodo) -> Dict[str, List[Carga]]:
         """
-        Obtiene las cargas que impiden finalizar un periodo,
-        agrupadas por estado.
+        Obtiene las cargas pendientes (incompletas) que impiden finalizar un periodo.
 
         Args:
             periodo: Instancia de Periodo
 
         Returns:
-            Dict con listas de cargas erróneas y pendientes
+            Dict con lista de cargas pendientes
         """
         return {
-            'erroneas': list(periodo.cargas.filter(estado=Carga.Estado.ERRONEA)),
             'pendientes': list(periodo.cargas.filter(estado=Carga.Estado.PENDIENTE))
         }
 
@@ -70,14 +68,11 @@ class PeriodoService:
 
         if not PeriodoService.puede_finalizar(periodo):
             cargas_problematicas = PeriodoService.obtener_cargas_problematicas(periodo)
-            total_problemas = (
-                len(cargas_problematicas['erroneas']) +
-                len(cargas_problematicas['pendientes'])
-            )
+            total_problemas = len(cargas_problematicas['pendientes'])
 
             return {
                 'success': False,
-                'mensaje': f'No se puede finalizar el periodo. Hay {total_problemas} carga(s) con problemas.',
+                'mensaje': f'No se puede finalizar el periodo. Hay {total_problemas} carga(s) pendiente(s) (incompleta(s)).',
                 'cargas_problematicas': cargas_problematicas
             }
 
@@ -105,7 +100,6 @@ class PeriodoService:
         cargas_por_estado = {
             'correctas': periodo.cargas.filter(estado=Carga.Estado.CORRECTA).count(),
             'pendientes': periodo.cargas.filter(estado=Carga.Estado.PENDIENTE).count(),
-            'erroneas': periodo.cargas.filter(estado=Carga.Estado.ERRONEA).count(),
         }
 
         porcentaje_completado = 0

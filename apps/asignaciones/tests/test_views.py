@@ -153,7 +153,6 @@ class PeriodoViewSetTestCase(TestCase):
         self.assertIn('cargas_por_estado', response.data)
         self.assertIn('correctas', response.data['cargas_por_estado'])
         self.assertIn('pendientes', response.data['cargas_por_estado'])
-        self.assertIn('erroneas', response.data['cargas_por_estado'])
 
     def test_obtener_cargas_problematicas(self):
         """Test GET /api/asignaciones/periodos/{id}/cargas_problematicas/"""
@@ -165,9 +164,7 @@ class PeriodoViewSetTestCase(TestCase):
         response = self.client.get(f'/api/asignaciones/periodos/{periodo.id}/cargas_problematicas/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('total_pendientes', response.data)
-        self.assertIn('total_erroneas', response.data)
         self.assertIn('pendientes', response.data)
-        self.assertIn('erroneas', response.data)
 
 
 class CargaViewSetTestCase(TestCase):
@@ -402,7 +399,6 @@ class CargaViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('correctas', response.data)
         self.assertIn('pendientes', response.data)
-        self.assertIn('erroneas', response.data)
 
     def test_filtrar_cargas_por_periodo(self):
         """Test GET /api/asignaciones/cargas/?periodo=1"""

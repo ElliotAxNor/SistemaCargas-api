@@ -361,17 +361,17 @@ class CargaCreateUpdateSerializerTestCase(TestCase):
         self.assertTrue(carga_actualizada.bloques.filter(dia='MAR').exists())
         self.assertFalse(carga_actualizada.bloques.filter(dia='LUN').exists())
 
-    def test_estado_automatico_erroneo_con_horas_incorrectas(self):
-        """Test que el estado se calcule automáticamente como ERRONEA."""
-        # Crear carga sin bloques
+    def test_estado_automatico_pendiente_sin_profesor(self):
+        """Test que el estado sea PENDIENTE cuando falta el profesor."""
+        # Crear carga sin profesor
         carga = Carga.objects.create(
             programa_academico=self.programa,
             materia=self.materia,
-            profesor=self.profesor,
+            profesor=None,
             periodo=self.periodo
         )
 
-        # Agregar solo 2 horas (materia requiere 6)
+        # Agregar bloques
         BloqueHorario.objects.create(
             carga=carga,
             dia='LUN',
@@ -383,7 +383,7 @@ class CargaCreateUpdateSerializerTestCase(TestCase):
         serializer = CargaCreateUpdateSerializer(carga)
         serializer._actualizar_estado(carga)
 
-        self.assertEqual(carga.estado, Carga.Estado.ERRONEA)
+        self.assertEqual(carga.estado, Carga.Estado.PENDIENTE)
 
     def test_estado_automatico_correcto(self):
         """Test que el estado se calcule automáticamente como CORRECTA."""

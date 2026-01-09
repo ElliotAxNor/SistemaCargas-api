@@ -109,7 +109,7 @@ puede = PeriodoService.puede_finalizar(periodo)
 
 # Obtener cargas problemáticas
 problemas = PeriodoService.obtener_cargas_problematicas(periodo)
-# Retorna: {'erroneas': [...], 'pendientes': [...]}
+# Retorna: {'pendientes': [...]}
 
 # Finalizar periodo
 resultado = PeriodoService.finalizar_periodo(periodo)
@@ -123,7 +123,7 @@ stats = PeriodoService.obtener_estadisticas_periodo(periodo)
 # Retorna:
 # {
 #     'total_cargas': 150,
-#     'cargas_por_estado': {'correctas': 120, 'pendientes': 20, 'erroneas': 10},
+#     'cargas_por_estado': {'correctas': 120, 'pendientes': 30},
 #     'porcentaje_completado': 80.0,
 #     'puede_finalizar': False,
 #     'finalizado': False

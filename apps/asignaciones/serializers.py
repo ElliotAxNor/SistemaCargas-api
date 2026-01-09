@@ -7,6 +7,8 @@ from rest_framework import serializers
 from .models import Periodo, Carga, BloqueHorario
 from .services import ValidadorConflictos, ValidadorHoras, PeriodoService
 from common.exceptions import ConflictoHorarioException, HorasInvalidasException
+from apps.core.serializers import ProgramaAcademicoSerializer
+from apps.academico.serializers import MateriaSerializer, ProfesorSerializer
 
 
 class PeriodoSerializer(serializers.ModelSerializer):
@@ -154,10 +156,51 @@ class BloqueHorarioCreateSerializer(serializers.ModelSerializer):
         return data
 
 
+class CargaDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer para Carga con información completa anidada.
+    Usado para list y retrieve - devuelve objetos completos relacionados.
+    """
+    # Serializar objetos completos anidados
+    programa_academico = ProgramaAcademicoSerializer(read_only=True)
+    materia = MateriaSerializer(read_only=True)
+    profesor = ProfesorSerializer(read_only=True)
+    periodo = PeriodoSerializer(read_only=True)
+    bloques = BloqueHorarioSerializer(many=True, read_only=True)
+
+    # Campos adicionales
+    estado_display = serializers.CharField(
+        source='get_estado_display',
+        read_only=True
+    )
+    total_horas_bloques = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Carga
+        fields = [
+            'id',
+            'programa_academico',
+            'materia',
+            'profesor',
+            'periodo',
+            'bloques',
+            'estado',
+            'estado_display',
+            'total_horas_bloques',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_total_horas_bloques(self, obj):
+        """Calcula el total de horas usando el service."""
+        return ValidadorHoras.calcular_total_horas_bloques(obj)
+
+
 class CargaSerializer(serializers.ModelSerializer):
     """
-    Serializer para Carga (lectura).
-    Incluye información completa anidada.
+    Serializer básico para Carga (lectura).
+    Incluye solo campos simples con nombres expandidos.
     """
     programa_academico_nombre = serializers.CharField(
         source='programa_academico.nombre',
@@ -240,9 +283,11 @@ class CargaListSerializer(serializers.ModelSerializer):
 class CargaCreateUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer para crear/actualizar Carga.
-    Incluye validaciones de conflictos y horas usando services.
+    Permite guardado parcial (borrador):
+    - profesor y bloques son opcionales para permitir estado PENDIENTE
+    - Estado CORRECTA cuando tiene profesor y bloques completos
     """
-    bloques = BloqueHorarioCreateSerializer(many=True)
+    bloques = BloqueHorarioCreateSerializer(many=True, required=False)
 
     class Meta:
         model = Carga
@@ -256,89 +301,42 @@ class CargaCreateUpdateSerializer(serializers.ModelSerializer):
             'bloques'
         ]
         read_only_fields = ['estado']  # El estado se calcula automáticamente
+        extra_kwargs = {
+            'profesor': {'required': False, 'allow_null': True},
+        }
 
     def validate(self, data):
         """
         Valida:
         1. Que el periodo no esté finalizado
-        2. Que las horas de los bloques coincidan con las horas de la materia
-        3. Que no haya conflictos de horario
+        2. Permite guardado parcial (sin profesor o sin bloques)
         """
         periodo = data.get('periodo', self.instance.periodo if self.instance else None)
-        materia = data.get('materia', self.instance.materia if self.instance else None)
-        profesor = data.get('profesor', self.instance.profesor if self.instance else None)
-        bloques_data = data.get('bloques', [])
 
-        # 1. Validar que el periodo no esté finalizado
+        # Validar que el periodo no esté finalizado
         if periodo and periodo.finalizado:
             raise serializers.ValidationError({
                 'periodo': 'No se pueden crear o modificar cargas en un periodo finalizado.'
             })
-
-        # 2. Validar horas (si hay bloques)
-        if bloques_data and materia:
-            # Crear instancias temporales de BloqueHorario para validación
-            bloques_temp = [
-                BloqueHorario(**bloque_data) for bloque_data in bloques_data
-            ]
-
-            horas_validas = ValidadorHoras.validar_horas_bloques(
-                bloques_temp,
-                materia.horas
-            )
-
-            if not horas_validas:
-                total_horas = sum(
-                    ValidadorHoras.calcular_duracion_bloque(b) for b in bloques_temp
-                )
-                raise HorasInvalidasException(
-                    f'Las horas de los bloques ({total_horas}h) no coinciden con las horas de la materia ({materia.horas}h).'
-                )
-
-        # 3. Validar conflictos de horario (si hay bloques y profesor)
-        if bloques_data and profesor and periodo:
-            # Crear instancias temporales de BloqueHorario
-            bloques_temp = [
-                BloqueHorario(**bloque_data) for bloque_data in bloques_data
-            ]
-
-            # Excluir la carga actual si estamos actualizando
-            excluir_carga_id = self.instance.id if self.instance else None
-
-            conflicto = ValidadorConflictos.validar_disponibilidad_profesor(
-                profesor=profesor,
-                periodo=periodo,
-                bloques=bloques_temp,
-                excluir_carga_id=excluir_carga_id
-            )
-
-            if conflicto:
-                bloques_info = ', '.join([
-                    f"{b.get_dia_display()} {b.hora_inicio.strftime('%H:%M')}-{b.hora_fin.strftime('%H:%M')}"
-                    for b in bloques_temp
-                ])
-                raise ConflictoHorarioException(
-                    f'El profesor {profesor.nombre} ya tiene asignada la materia '
-                    f'{conflicto["materia_clave"]} del programa {conflicto["programa"]} '
-                    f'en horarios que se solapan con: {bloques_info}'
-                )
 
         return data
 
     def create(self, validated_data):
         """
         Crea una carga con sus bloques horarios.
+        Permite crear sin bloques (guardado parcial).
         """
-        bloques_data = validated_data.pop('bloques')
+        bloques_data = validated_data.pop('bloques', [])
 
-        # Crear la carga con estado PENDIENTE
+        # Crear la carga con estado PENDIENTE por defecto
         carga = Carga.objects.create(**validated_data)
 
-        # Crear los bloques horarios
-        for bloque_data in bloques_data:
-            BloqueHorario.objects.create(carga=carga, **bloque_data)
+        # Crear los bloques horarios si se proporcionaron
+        if bloques_data:
+            for bloque_data in bloques_data:
+                BloqueHorario.objects.create(carga=carga, **bloque_data)
 
-        # Validar y actualizar el estado
+        # Calcular y actualizar el estado
         self._actualizar_estado(carga)
 
         return carga
@@ -370,18 +368,16 @@ class CargaCreateUpdateSerializer(serializers.ModelSerializer):
 
     def _actualizar_estado(self, carga):
         """
-        Actualiza el estado de la carga según las validaciones.
+        Actualiza el estado de la carga según su completitud:
+        - PENDIENTE: Falta profesor o bloques horarios
+        - CORRECTA: Tiene profesor y bloques horarios
         """
-        # Verificar horas
-        horas_validas = ValidadorHoras.validar_horas_carga(carga)
+        tiene_profesor = carga.profesor is not None
+        tiene_bloques = carga.bloques.exists()
 
-        # Verificar conflictos
-        conflicto = ValidadorConflictos.detectar_conflicto_carga(carga)
-
-        # Determinar estado
-        if not horas_validas or conflicto:
-            carga.estado = Carga.Estado.ERRONEA
-        else:
+        if tiene_profesor and tiene_bloques:
             carga.estado = Carga.Estado.CORRECTA
+        else:
+            carga.estado = Carga.Estado.PENDIENTE
 
         carga.save(update_fields=['estado'])
