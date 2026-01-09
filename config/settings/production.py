@@ -48,6 +48,5 @@ CSRF_COOKIE_SECURE = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise para servir archivos estáticos
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# PythonAnywhere sirve los archivos estáticos directamente desde el Web tab
+# No necesitamos WhiteNoise aquí
