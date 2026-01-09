@@ -25,6 +25,19 @@ Tu proyecto usa **SQLite** que es simple y funciona bien para:
 
 Para este proyecto académico está perfecto! 👍
 
+## 🚨 NOTA IMPORTANTE: Orden de Configuración
+
+**El disco persistente se configura DESPUÉS de crear el servicio, NO durante la creación inicial.**
+
+**Flujo correcto:**
+1. Crear servicio en Render (Pasos 1-5)
+2. **Inmediatamente después**, configurar disco persistente (Paso 6) ⚠️ CRÍTICO
+3. Continuar con configuración de usuario y pruebas (Pasos 7-11)
+
+Si no configurás el disco persistente en el Paso 6, **perderás todos los datos** cada vez que Render redespliega tu servicio.
+
+---
+
 ## 📋 Paso 1: Preparar el Repositorio
 
 ### 1.1 Subir cambios a GitHub
@@ -68,21 +81,9 @@ git push origin main
 
 4. **NO HAGAS CLIC EN "Create Web Service" TODAVÍA**
 
-## 📋 Paso 4: Configurar Disco Persistente (IMPORTANTE)
+## 📋 Paso 4: Configurar Variables de Entorno
 
-Para que la base de datos SQLite NO se borre cada vez que se redespliega:
-
-1. Antes de crear el servicio, scroll hacia abajo hasta **"Advanced"**
-2. Haz clic en **"Add Disk"**
-3. Configura:
-   - **Name:** `database`
-   - **Mount Path:** `/opt/render/project/src` (ruta donde está tu proyecto)
-   - **Size:** 1 GB (suficiente para la base de datos)
-4. Haz clic en **"Save"**
-
-**Esto es CRUCIAL** - sin disco persistente, perderás todos los datos cada vez que Render redespliega.
-
-## 📋 Paso 5: Configurar Variables de Entorno
+**NOTA IMPORTANTE:** El disco persistente se configurará DESPUÉS de crear el servicio (ver Paso 6).
 
 Scroll hacia abajo hasta **"Environment Variables"** y agrega:
 
@@ -113,19 +114,35 @@ Copia el resultado y úsalo como valor.
 - **SIN barra diagonal al final**
 - Si tienes múltiples dominios, sepáralos con coma: `https://tu-app.vercel.app,https://otro-dominio.com`
 
-## 📋 Paso 6: Crear el Servicio
+## 📋 Paso 5: Crear el Servicio (Primera Vez)
 
-1. Revisa que todas las variables estén configuradas
-2. Revisa que el **disco persistente** esté configurado
-3. Haz clic en **"Create Web Service"**
-4. **⏳ Espera** entre 5-10 minutos mientras Render:
+1. Revisa que todas las variables de entorno estén configuradas
+2. Haz clic en **"Create Web Service"**
+3. **⏳ Espera** entre 5-10 minutos mientras Render:
    - Clona tu repositorio
    - Instala las dependencias
    - Ejecuta las migraciones
    - Recopila archivos estáticos
    - Inicia el servidor
 
-5. Puedes ver el progreso en los **logs** (pestaña "Logs")
+4. Puedes ver el progreso en los **logs** (pestaña "Logs")
+
+## 📋 Paso 6: Configurar Disco Persistente (CRÍTICO)
+
+**⚠️ IMPORTANTE:** Sin este paso, perderás todos los datos cada vez que Render redespliega.
+
+Una vez que el servicio esté creado y corriendo:
+
+1. En tu servicio de Render, busca en el menú lateral izquierdo la opción **"Disks"** o **"Storage"**
+2. Haz clic en **"Add Disk"** o **"New Disk"**
+3. Configura el disco:
+   - **Name:** `database`
+   - **Mount Path:** `/opt/render/project/src`
+   - **Size:** 1 GB (suficiente para la base de datos SQLite)
+4. Haz clic en **"Create"** o **"Save"**
+5. El servicio se reiniciará automáticamente con el disco montado
+
+**Verificar:** Después del reinicio, en la pestaña "Disks" deberías ver tu disco montado en `/opt/render/project/src`.
 
 ## 📋 Paso 7: Obtener la URL y Actualizar Variables
 
@@ -138,7 +155,7 @@ Copia el resultado y úsalo como valor.
    - Guarda los cambios
    - El servicio se reiniciará automáticamente
 
-## 📋 Paso 8: Crear Superusuario
+## 📋 Paso 8: Crear Superusuario (Usuario Administrador)
 
 Necesitas crear un usuario administrador para acceder a tu API:
 
@@ -215,10 +232,13 @@ Prueba que todo funcione:
 - Ejemplo incorrecto: `https://mi-app.vercel.app/`
 
 ### Los datos se borran después de redesplegar
-- **Verifica que configuraste el disco persistente** en el Paso 4
-- Ve a **Settings** → **Disks**
-- Debe aparecer un disco montado en `/opt/render/project/src`
-- Si no está, agrégalo y redespliega
+- **Verifica que configuraste el disco persistente** en el Paso 6
+- Ve a tu servicio → Menú lateral izquierdo → **"Disks"**
+- Debe aparecer un disco montado en `/opt/render/project/src` con nombre `database`
+- Si no está configurado:
+  1. Haz clic en **"Add Disk"** o **"New Disk"**
+  2. Name: `database`, Mount Path: `/opt/render/project/src`, Size: 1 GB
+  3. Guarda y espera a que el servicio se reinicie
 
 ### Cambios en el código no se reflejan
 - Haz `git push` para subir los cambios a GitHub
@@ -325,13 +345,14 @@ Tu API está desplegada y lista para usar. Puedes acceder a:
 Antes de considerar el despliegue completo, verifica:
 
 - ✅ El servicio está corriendo (status "Live" en Render)
-- ✅ Disco persistente configurado y montado
-- ✅ Variables de entorno configuradas correctamente
-- ✅ Superusuario creado
+- ✅ **DISCO PERSISTENTE configurado** (ve a Disks y verifica que esté montado en `/opt/render/project/src`)
+- ✅ Variables de entorno configuradas correctamente (SECRET_KEY, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS)
+- ✅ Superusuario creado (puedes hacer login en `/admin/`)
+- ✅ Base de datos SQLite existe (verifica con `ls -lh db.sqlite3` en Shell)
 - ✅ Frontend conectado y funcionando
 - ✅ Login funciona desde el frontend
-- ✅ CORS configurado correctamente
-- ✅ Puedes acceder al admin de Django
+- ✅ CORS configurado correctamente (no hay errores de CORS en la consola del navegador)
+- ✅ Puedes acceder al admin de Django (`https://tu-api.onrender.com/admin/`)
 
 ---
 
