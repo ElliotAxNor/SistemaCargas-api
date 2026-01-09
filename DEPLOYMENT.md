@@ -25,16 +25,43 @@ Tu proyecto usa **SQLite** que es simple y funciona bien para:
 
 Para este proyecto académico está perfecto! 👍
 
-## 🚨 NOTA IMPORTANTE: Orden de Configuración
+## 🚨 IMPORTANTE: Limitación del Plan Gratuito
 
-**El disco persistente se configura DESPUÉS de crear el servicio, NO durante la creación inicial.**
+**Los discos persistentes NO están disponibles en el plan gratuito de Render.**
 
-**Flujo correcto:**
-1. Crear servicio en Render (Pasos 1-5)
-2. **Inmediatamente después**, configurar disco persistente (Paso 6) ⚠️ CRÍTICO
-3. Continuar con configuración de usuario y pruebas (Pasos 7-11)
+Esto significa que con SQLite en el plan gratuito, **los datos se perderán cada vez que Render redespliega** tu servicio (lo cual puede ocurrir varias veces al día cuando hay actualizaciones o mantenimiento).
 
-Si no configurás el disco persistente en el Paso 6, **perderás todos los datos** cada vez que Render redespliega tu servicio.
+### Opciones Disponibles:
+
+**Opción 1: PostgreSQL Gratis** ⭐ RECOMENDADO para uso real
+- ✅ Base de datos persistente incluida gratis (500 MB)
+- ✅ Los datos NO se pierden en redeploys
+- ✅ Mejor para producción
+- ⚠️ Requiere cambiar configuración (ver sección "Migrar a PostgreSQL" al final)
+
+**Opción 2: Plan Starter de Render** ($7/mes)
+- ✅ Incluye discos persistentes para SQLite
+- ✅ Sin downtime en deploys
+- ✅ Acceso SSH y Web Shell
+- ⚠️ Costo mensual de $7 USD
+
+**Opción 3: SQLite en Plan Gratuito** (solo para pruebas temporales)
+- ✅ Completamente gratis
+- ✅ Funciona para demos/pruebas rápidas
+- ⚠️ Los datos se pierden en cada redeploy
+- ⚠️ NO recomendado si necesitas mantener datos
+
+**Opción 4: Otras Plataformas**
+- Railway.app, Fly.io u otras que permitan SQLite persistente gratis
+- Requiere investigar cada plataforma
+
+### ¿Qué opción elegir?
+
+- **Si es un proyecto académico que vas a presentar/evaluar:** Opción 1 (PostgreSQL gratis)
+- **Si solo quieres probar rápidamente:** Opción 3 (SQLite gratis, aceptando pérdida de datos)
+- **Si tienes presupuesto y quieres mantener SQLite:** Opción 2 (Plan Starter $7/mes)
+
+**Esta guía continúa asumiendo la Opción 3 (SQLite en plan gratuito).** Para migrar a PostgreSQL (Opción 1), ve a la sección "Migrar a PostgreSQL" al final de este documento.
 
 ---
 
@@ -83,7 +110,7 @@ git push origin main
 
 ## 📋 Paso 4: Configurar Variables de Entorno
 
-**NOTA IMPORTANTE:** El disco persistente se configurará DESPUÉS de crear el servicio (ver Paso 6).
+**NOTA:** Si elegiste PostgreSQL (Opción 1), ve a la sección "Migrar a PostgreSQL" antes de continuar.
 
 Scroll hacia abajo hasta **"Environment Variables"** y agrega:
 
@@ -114,7 +141,7 @@ Copia el resultado y úsalo como valor.
 - **SIN barra diagonal al final**
 - Si tienes múltiples dominios, sepáralos con coma: `https://tu-app.vercel.app,https://otro-dominio.com`
 
-## 📋 Paso 5: Crear el Servicio (Primera Vez)
+## 📋 Paso 5: Crear el Servicio
 
 1. Revisa que todas las variables de entorno estén configuradas
 2. Haz clic en **"Create Web Service"**
@@ -127,24 +154,9 @@ Copia el resultado y úsalo como valor.
 
 4. Puedes ver el progreso en los **logs** (pestaña "Logs")
 
-## 📋 Paso 6: Configurar Disco Persistente (CRÍTICO)
+**⚠️ RECORDATORIO:** Con SQLite en plan gratuito, los datos se perderán en cada redeploy. Para datos persistentes, considera migrar a PostgreSQL (ver sección final).
 
-**⚠️ IMPORTANTE:** Sin este paso, perderás todos los datos cada vez que Render redespliega.
-
-Una vez que el servicio esté creado y corriendo:
-
-1. En tu servicio de Render, busca en el menú lateral izquierdo la opción **"Disks"** o **"Storage"**
-2. Haz clic en **"Add Disk"** o **"New Disk"**
-3. Configura el disco:
-   - **Name:** `database`
-   - **Mount Path:** `/opt/render/project/src`
-   - **Size:** 1 GB (suficiente para la base de datos SQLite)
-4. Haz clic en **"Create"** o **"Save"**
-5. El servicio se reiniciará automáticamente con el disco montado
-
-**Verificar:** Después del reinicio, en la pestaña "Disks" deberías ver tu disco montado en `/opt/render/project/src`.
-
-## 📋 Paso 7: Obtener la URL y Actualizar Variables
+## 📋 Paso 6: Obtener la URL y Actualizar Variables
 
 1. Una vez que el despliegue termine con éxito, verás la URL de tu servicio:
    - Será algo como: `https://sistema-cargas-api.onrender.com`
@@ -155,7 +167,7 @@ Una vez que el servicio esté creado y corriendo:
    - Guarda los cambios
    - El servicio se reiniciará automáticamente
 
-## 📋 Paso 8: Crear Superusuario (Usuario Administrador)
+## 📋 Paso 7: Crear Superusuario (Usuario Administrador)
 
 Necesitas crear un usuario administrador para acceder a tu API:
 
@@ -173,7 +185,7 @@ python manage.py createsuperuser
 
 5. Ya tienes tu usuario administrador listo!
 
-## 📋 Paso 9: Verificar la Base de Datos
+## 📋 Paso 8: Verificar la Base de Datos
 
 Asegúrate de que la base de datos se creó correctamente:
 
@@ -184,7 +196,7 @@ ls -lh db.sqlite3
 2. Deberías ver el archivo de la base de datos
 3. Si todo está bien, verás algo como: `-rw-r--r-- 1 render render 128K Jan 10 12:34 db.sqlite3`
 
-## 📋 Paso 10: Actualizar Frontend
+## 📋 Paso 9: Actualizar Frontend
 
 Actualiza la URL de tu API en el frontend:
 
@@ -195,7 +207,7 @@ Actualiza la URL de tu API en el frontend:
 3. Ve a **Deployments** → Haz clic en los 3 puntos del último deployment → **"Redeploy"**
 4. El frontend se redesplegarácon la nueva URL de la API
 
-## 📋 Paso 11: Probar la API
+## 📋 Paso 10: Probar la API
 
 Prueba que todo funcione:
 
@@ -232,13 +244,12 @@ Prueba que todo funcione:
 - Ejemplo incorrecto: `https://mi-app.vercel.app/`
 
 ### Los datos se borran después de redesplegar
-- **Verifica que configuraste el disco persistente** en el Paso 6
-- Ve a tu servicio → Menú lateral izquierdo → **"Disks"**
-- Debe aparecer un disco montado en `/opt/render/project/src` con nombre `database`
-- Si no está configurado:
-  1. Haz clic en **"Add Disk"** o **"New Disk"**
-  2. Name: `database`, Mount Path: `/opt/render/project/src`, Size: 1 GB
-  3. Guarda y espera a que el servicio se reinicie
+- **Esto es normal con SQLite en el plan gratuito de Render**
+- Los discos persistentes requieren el plan Starter ($7/mes)
+- **Soluciones:**
+  1. **Migrar a PostgreSQL** (gratis, ver sección "Migrar a PostgreSQL" abajo)
+  2. **Upgrade a plan Starter** ($7/mes) para mantener SQLite con persistencia
+  3. **Aceptar pérdida de datos** si solo estás haciendo pruebas temporales
 
 ### Cambios en el código no se reflejan
 - Haz `git push` para subir los cambios a GitHub
@@ -345,13 +356,12 @@ Tu API está desplegada y lista para usar. Puedes acceder a:
 Antes de considerar el despliegue completo, verifica:
 
 - ✅ El servicio está corriendo (status "Live" en Render)
-- ✅ **DISCO PERSISTENTE configurado** (ve a Disks y verifica que esté montado en `/opt/render/project/src`)
 - ✅ Variables de entorno configuradas correctamente (SECRET_KEY, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS)
 - ✅ Superusuario creado (puedes hacer login en `/admin/`)
 - ✅ Base de datos SQLite existe (verifica con `ls -lh db.sqlite3` en Shell)
-- ✅ Frontend conectado y funcionando
+- ⚠️ **IMPORTANTE:** Si usas SQLite gratis, los datos se pierden en redeploys
+- ✅ Frontend conectado y funcionando (CORS configurado)
 - ✅ Login funciona desde el frontend
-- ✅ CORS configurado correctamente (no hay errores de CORS en la consola del navegador)
 - ✅ Puedes acceder al admin de Django (`https://tu-api.onrender.com/admin/`)
 
 ---
@@ -363,8 +373,172 @@ Antes de considerar el despliegue completo, verifica:
 - ✅ 750 horas/mes gratis (suficiente para uso continuo)
 - 💡 Para producción real sin sleep, considera el plan pagado ($7/mes)
 
+---
+
+## 🔄 Migrar a PostgreSQL (Opción Recomendada para Datos Persistentes)
+
+Si decidiste que necesitas mantener los datos de forma persistente sin pagar, puedes migrar a PostgreSQL gratis en Render:
+
+### Paso 1: Crear Base de Datos PostgreSQL en Render
+
+1. En el Dashboard de Render, haz clic en **"New +"** → **"PostgreSQL"**
+2. Configura:
+   - **Name:** `sistema-cargas-db`
+   - **Database:** `sistema_cargas`
+   - **User:** (se genera automáticamente)
+   - **Region:** Mismo que tu web service
+   - **Plan:** **Free** (500 MB)
+3. Haz clic en **"Create Database"**
+4. Espera a que se cree (1-2 minutos)
+5. Copia la **Internal Database URL** (se ve así: `postgres://user:pass@hostname/dbname`)
+
+### Paso 2: Actualizar Archivos del Proyecto
+
+#### 2.1 Actualizar `requirements.txt`
+
+Agrega las dependencias de PostgreSQL:
+
+```txt
+# Django
+Django>=4.2,<5.0
+djangorestframework>=3.14,<4.0
+
+# Database
+psycopg2-binary>=2.9,<3.0
+dj-database-url>=2.1,<3.0
+
+# Environment variables
+python-decouple>=3.8,<4.0
+
+# CORS
+django-cors-headers>=4.3,<5.0
+
+# Filtering
+django-filter>=23.5,<24.0
+
+# Authentication
+djangorestframework-simplejwt>=5.3,<6.0
+
+# Production server
+gunicorn>=21.2,<22.0
+whitenoise>=6.6,<7.0
+
+# Development
+ipython>=8.0,<9.0
+```
+
+#### 2.2 Actualizar `config/settings/production.py`
+
+Reemplaza la configuración de base de datos:
+
+```python
+"""
+Django production settings.
+"""
+
+from .base import *
+import dj_database_url
+
+DEBUG = False
+
+# Database - PostgreSQL
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
+
+# Allowed hosts
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# CORS
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+CORS_ALLOW_CREDENTIALS = True
+
+# Security settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+```
+
+#### 2.3 Actualizar `.env.example`
+
+```env
+# Django Settings
+SECRET_KEY=tu-clave-secreta-aqui
+DJANGO_SETTINGS_MODULE=config.settings.production
+
+# Database (PostgreSQL)
+DATABASE_URL=postgres://user:password@hostname:5432/database_name
+
+# Hosts permitidos
+ALLOWED_HOSTS=tu-app.onrender.com,localhost
+
+# CORS
+CORS_ALLOWED_ORIGINS=https://tu-app.vercel.app,http://localhost:3000
+
+# Security
+SECURE_SSL_REDIRECT=True
+```
+
+### Paso 3: Subir Cambios a GitHub
+
+```bash
+git add .
+git commit -m "Migrar a PostgreSQL para persistencia de datos"
+git push origin main
+```
+
+### Paso 4: Configurar Variable de Entorno en Render
+
+1. Ve a tu Web Service en Render
+2. Ve a **"Environment"** en el menú lateral
+3. Agrega una nueva variable:
+   - **Key:** `DATABASE_URL`
+   - **Value:** [Pega la Internal Database URL que copiaste del paso 1]
+4. Guarda los cambios
+5. El servicio se redesplegaráautomáticamente
+
+### Paso 5: Verificar Migración
+
+1. Ve a **"Logs"** y verifica que no haya errores
+2. Busca mensajes como: `Running migrations:` y `Applying ...`
+3. Ve a **"Shell"** y ejecuta:
+   ```bash
+   python manage.py createsuperuser
+   ```
+4. Crea tu usuario administrador nuevamente
+5. Prueba accediendo a `https://tu-api.onrender.com/admin/`
+
+### Ventajas de PostgreSQL:
+
+- ✅ Los datos NO se pierden en redeploys
+- ✅ Completamente gratis (500 MB)
+- ✅ Mejor rendimiento para múltiples usuarios concurrentes
+- ✅ Más apropiado para producción
+- ✅ Backups automáticos (en planes pagados)
+
+---
+
 **¿Necesitas ayuda?** Si encuentras problemas:
 1. Revisa los logs en Render (pestaña "Logs")
-2. Verifica las variables de entorno
-3. Asegúrate de que el disco persistente esté configurado
+2. Verifica las variables de entorno (especialmente DATABASE_URL)
+3. Asegúrate de que la base de datos PostgreSQL esté activa (status "Available")
 4. Contacta si necesitas más ayuda! 🚀

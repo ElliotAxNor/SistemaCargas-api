@@ -4,7 +4,8 @@ Django production settings.
 
 from .base import *
 
-DEBUG = False
+# DEBUG - Cambiar a True temporalmente para diagnosticar errores
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Database - Mantener SQLite
 # La base de datos se guardará en un volumen persistente de Render
@@ -15,8 +16,11 @@ DATABASES = {
     }
 }
 
-# Allowed hosts - Render.com añadirá el dominio automáticamente
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+# Allowed hosts
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
+
+# Limpiar valores vacíos
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # Si estás en Render, acepta el dominio .onrender.com
 RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
@@ -24,7 +28,10 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # CORS - Configurar con la URL de tu frontend en Vercel
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',')
+
+# Limpiar valores vacíos
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
 
 # Permitir credentials (para JWT)
 CORS_ALLOW_CREDENTIALS = True
