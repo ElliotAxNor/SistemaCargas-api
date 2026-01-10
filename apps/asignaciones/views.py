@@ -245,7 +245,7 @@ class CargaViewSet(viewsets.ModelViewSet):
 
             return Response({
                 'disponible': False,
-                'mensaje': f"El profesor ya tiene asignada la materia {materia_clave} del programa {programa}",
+                'mensaje': f"El profesor ya tiene asignada la materia {materia} del programa {programa}",
                 'conflicto': {
                     'carga_id': carga_id,
                     'programa': programa,

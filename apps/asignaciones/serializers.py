@@ -309,15 +309,55 @@ class CargaCreateUpdateSerializer(serializers.ModelSerializer):
         """
         Valida:
         1. Que el periodo no esté finalizado
-        2. Permite guardado parcial (sin profesor o sin bloques)
+        2. Conflictos de horarios con otras cargas del mismo profesor
+        3. Que las horas de bloques coincidan con las horas de la materia
+        4. Permite guardado parcial (sin profesor o sin bloques)
         """
         periodo = data.get('periodo', self.instance.periodo if self.instance else None)
+        profesor = data.get('profesor', self.instance.profesor if self.instance else None)
+        materia = data.get('materia', self.instance.materia if self.instance else None)
+        bloques_data = data.get('bloques', [])
 
         # Validar que el periodo no esté finalizado
         if periodo and periodo.finalizado:
             raise serializers.ValidationError({
                 'periodo': 'No se pueden crear o modificar cargas en un periodo finalizado.'
             })
+
+        # Solo validar si tenemos profesor y bloques (carga completa)
+        if profesor and bloques_data:
+            # Crear instancias temporales de bloques para validación
+            bloques_temp = []
+            for bloque_data in bloques_data:
+                bloques_temp.append(BloqueHorario(
+                    dia=bloque_data['dia'],
+                    hora_inicio=bloque_data['hora_inicio'],
+                    hora_fin=bloque_data['hora_fin']
+                ))
+
+            # 1. Validar horas (que coincidan con las horas de la materia)
+            if materia:
+                horas_validas = ValidadorHoras.validar_horas_bloques(bloques_temp, materia.horas)
+                if not horas_validas:
+                    total_horas = sum(ValidadorHoras.calcular_duracion_bloque(b) for b in bloques_temp)
+                    raise HorasInvalidasException(
+                        f'Las horas de los bloques ({total_horas}) no coinciden con las horas de la materia ({materia.horas}).'
+                    )
+
+            # 2. Validar conflictos de horarios
+            excluir_id = self.instance.id if self.instance else None
+            conflicto = ValidadorConflictos.validar_disponibilidad_profesor(
+                profesor=profesor,
+                periodo=periodo,
+                bloques=bloques_temp,
+                excluir_carga_id=excluir_id
+            )
+
+            if conflicto:
+                raise ConflictoHorarioException(
+                    f"El profesor ya tiene asignada la materia {conflicto['materia']} "
+                    f"del programa {conflicto['programa']} en un horario que se solapa."
+                )
 
         return data
 

@@ -211,6 +211,14 @@ class UsuarioListSerializer(serializers.ModelSerializer):
     Serializer simplificado para listar usuarios.
     """
     rol_display = serializers.CharField(source='get_rol_display', read_only=True)
+    programa_academico_nombre = serializers.CharField(
+        source='programa_academico.nombre',
+        read_only=True
+    )
+    unidad_academica_nombre = serializers.CharField(
+        source='unidad_academica.nombre',
+        read_only=True
+    )
 
     class Meta:
         model = Usuario
@@ -221,5 +229,9 @@ class UsuarioListSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'rol',
-            'rol_display'
+            'rol_display',
+            'programa_academico',
+            'programa_academico_nombre',
+            'unidad_academica',
+            'unidad_academica_nombre'
         ]

@@ -168,7 +168,7 @@ class CargaViewSet(viewsets.ModelViewSet):
         if conflicto:
             return Response({
                 'disponible': False,
-                'mensaje': f"El profesor ya tiene asignada la materia {conflicto['materia_clave']} del programa {conflicto['programa']}",
+                'mensaje': f"El profesor ya tiene asignada la materia {conflicto['materia']} del programa {conflicto['programa']}",
                 'conflicto': conflicto
             }, status=status.HTTP_409_CONFLICT)
 
