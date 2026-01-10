@@ -21,7 +21,7 @@ Gestiona la asignación de profesores a materias (cargas académicas) validando 
 ### 1. Clonar y preparar entorno
 
 ```bash
-git clone <tu-repo>
+git clone https://github.com/ElliotAxNor/SistemaCargas-api.git
 cd SistemaCargas-api
 
 # Crear entorno virtual
@@ -40,17 +40,6 @@ pip install -r requirements.txt
 ### 2. Configurar variables de entorno
 
 Crea un archivo `.env` (usa `.env.example` como referencia):
-
-```env
-SECRET_KEY=tu-secret-key-aqui
-DJANGO_SETTINGS_MODULE=config.settings.development
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-```
-
-Genera un SECRET_KEY:
-```bash
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
 
 ### 3. Configurar base de datos
 
